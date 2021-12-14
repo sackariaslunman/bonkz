@@ -385,6 +385,7 @@ LedControl externalClock(13,12,11,1);
 
 void initExternalClock()
 {
+  delay(1000);
   externalClock.shutdown(0,false);
   /* Set the brightness to a medium values */
   externalClock.setIntensity(0,8);
@@ -769,7 +770,7 @@ void RenderSettings()
   lcd.setCursor(6,0);
   lcd.print("Settings");
   
-  String buttons[] = {"Players", "Sensors", "Sounds", "Save", "Reset", "Go Back"};
+  String buttons[] = {"Players", "Sensors", "Sound", "Save", "Reset", "Go Back"};
   PrintButtonMatrix(buttons, 2, 3, 1);
 
   if (input.clicked)
