@@ -1,100 +1,3 @@
-
-// Piezo
-const int buzzerPin = 3; //buzzer to arduino pin 9
-const char noteNames[]        = {'c',   'd',    'e',    'f',    'g',    'a',    'b',    'C',    'D',   'F',     'G' ,   'A'};
-const float noteFrequencies[] = {16.28, 18.27,  20.51,  21.73,  24.39,  27.38,  30.73,  17.32,  19.45,  23.12,  25.96,  29.14};
-
-const int songs[][24][3] = {
-  {{'a',5,150},{0,0,50},{'a',5,150},{0,0,50},{'a',5,150},{0,0,50},{'a',6,600},{'q',0,0}},
-  {{'c',7,1000},{'b',6,250},{'a',6,500},{'g',6,250},{'f',6,500},{'g',6,250},{'a',6,500},{'c',7,500},{'b',6,1000},{'a',6,250},{'g',6,250},{'f',6,500},{'e',6,1000},{'q',0,0}},
-  {{}}
-};
-
-struct Audio {
-  bool isPlaying = false;
-  long lastNoteTime = 0;
-  int noteIndex = 0;
-  int songIndex = 0;
-};
-Audio audio;
-
-float getFrequency(char noteName, int octave)
-{
-  for(int i = 0; i < 12; i++)
-  {
-    if (noteName == noteNames[i])
-      return noteFrequencies[i] * pow(2, octave);
-  }
-  return 0;
-}
-
-float getCurrentSongFrequency()
-{
-  return getFrequency(songs[audio.songIndex][audio.noteIndex][0], songs[audio.songIndex][audio.noteIndex][1]);
-}
-
-int getSongIndex(String sound)
-{
-  int songIndex = 0;
-
-  if (sound == "begin")
-    songIndex = 0;
-  else if (sound == "moon")
-    songIndex = 1;
-
-  return songIndex;
-}
-
-void startAudio(String sound)
-{
-  if (audio.isPlaying)
-    return;
-
-  int songIndex = getSongIndex(sound);
-  
-  audio.isPlaying = true;
-  audio.lastNoteTime = 0; 
-  audio.noteIndex = 0;
-  audio.songIndex = songIndex;
-}
-
-void stopAudio()
-{
-  if (!audio.isPlaying)
-    return;
-
-  noTone(buzzerPin);
-
-  audio.isPlaying = false;
-  audio.lastNoteTime = 0; 
-  audio.noteIndex = 0;
-  audio.songIndex = 0;
-}
-  
-void playAudio()
-{
-  if (!audio.isPlaying)
-    return;
-
-  if (audio.noteIndex > 0 && millis() < audio.lastNoteTime + songs[audio.songIndex][audio.noteIndex - 1][2])
-    return;
-  
-  if (songs[audio.songIndex][audio.noteIndex][0] == 'q')
-  {
-    stopAudio();
-    return;
-  }
-  float frequency = getCurrentSongFrequency();
-  
-  if (frequency != 0)
-    tone(buzzerPin, frequency);
-  else
-    noTone(buzzerPin);
-    
-  audio.lastNoteTime = millis();
-  audio.noteIndex++;
-}
-
 // Joystick Inputs
 const int vrxPin = A0;
 const int vryPin = A1;
@@ -153,7 +56,7 @@ struct Screen
 Screen screen;
 #define defaultPlayerCount 2;
 #define defaultSensitivity 1.5;
-#define defaultIsMuted true;
+#define defaultIsMuted false;
 
 #include <EEPROM.h>
 
@@ -198,6 +101,132 @@ void SaveSettings()
   EEPROM.put(settings.isMutedAddress, settings.isMuted);
 }
 
+// Piezo
+const int buzzerPin = 3; //buzzer to arduino pin 9
+const char noteNames[]        = {'c',   'd',    'e',    'f',    'g',    'a',    'b',    'C',    'D',   'F',     'G' ,   'A'};
+const float noteFrequencies[] = {16.28, 18.27,  20.51,  21.73,  24.39,  27.38,  30.73,  17.32,  19.45,  23.12,  25.96,  29.14};
+
+const int songs[][24][3] = {
+  {{'a',5,150},{0,0,50},{'a',5,150},{0,0,50},{'a',5,150},{0,0,50},{'a',6,600},{'q',0,0}},
+  {{'c',6,1000},{'b',5,250},{'a',5,500},{'g',5,250},{'f',5,500},{'g',5,250},{'a',5,500},{'c',6,500},{'b',5,1000},{'a',5,250},{'g',5,250},{'f',5,500},{'e',5,1000},{'q',0,0}},
+  {{'d',5,500},{'C',5,500},{'c',5,500},{'b',4,1000},{'q',0,0}},
+  {{'e',5,150},{'g',5,150},{'e',6,150},{'c',6,150},{'d',6,150},{'g',6,150},{'q',0,0}},
+  {{'b',5,150},{'e',6,500},{'q',0,0}},
+  {{'g',4,100},{0,0,25},{'G',4,100},{0,0,25},{'a',4,100},{0,0,25},{'A',4,100},{0,0,25},{'b',4,100},{'q',0,0}},
+  {{'a',5,150},{'b',5,150},{'d',6,150},{'e',6,150},{'a',6,150},{'q',0,0}},
+  {{'e',2,400},{'f',2,100},{'q',0,0}},
+  {{'G',4,200},{'b',4,150},{0,0,20},{'b',4,150},{0,0,100},{'b',4,650},{0,0,230},{'F',5,200},{'D',5,150},{'C',5,150},{'b',4,200},{'D',5,300},{'F',5,500},{0,0,250},{'F',5,500},{0,0,50},{'F',5,150},{'D',5,150},{'C',5,150},{'b',4,150},{'G',4,200},{'b',4,500},{'q',0,0}},
+  {{}}
+};
+const String songNames[] = {
+  "begin",
+  "moon",
+  "fail",
+  "cool",
+  "hall",
+  "measure",
+  "saved",
+  "reset",
+  "timber",
+  "",
+  "",
+  ""
+};
+int songCount = 12;
+
+struct Audio {
+  bool isPlaying = false;
+  long lastNoteTime = 0;
+  int noteIndex = 0;
+  int songIndex = 0;
+};
+Audio audio;
+
+float getFrequency(char noteName, int octave)
+{
+  for(int i = 0; i < 12; i++)
+  {
+    if (noteName == noteNames[i])
+      return noteFrequencies[i] * pow(2, octave);
+  }
+  return 0;
+}
+
+float getCurrentSongFrequency()
+{
+  return getFrequency(songs[audio.songIndex][audio.noteIndex][0], songs[audio.songIndex][audio.noteIndex][1]);
+}
+
+int getSongIndex(String sound)
+{
+  for(int i = 0; i < songCount; i++)
+  {
+    if (sound == songNames[i])
+      return i;
+  }
+  return 0;
+}
+
+void startAudio(String sound, bool override = true)
+{
+  if (settings.isMuted)
+    return;
+
+  if (audio.isPlaying && !override)
+    return;
+
+  int songIndex = getSongIndex(sound);
+  
+  audio.isPlaying = true;
+  audio.lastNoteTime = millis(); 
+  audio.noteIndex = 0;
+  audio.songIndex = songIndex;
+}
+
+void stopAudio()
+{
+  if (!audio.isPlaying)
+    return;
+
+  noTone(buzzerPin);
+
+  audio.isPlaying = false;
+  audio.lastNoteTime = 0; 
+  audio.noteIndex = 0;
+  audio.songIndex = 0;
+}
+  
+void playAudio()
+{
+  if (!audio.isPlaying)
+    return;
+
+  if (settings.isMuted)
+  {
+    stopAudio();
+    return;
+  }
+  
+  if (audio.noteIndex > 0 && millis() < audio.lastNoteTime + songs[audio.songIndex][audio.noteIndex - 1][2])
+    return;
+
+  if (songs[audio.songIndex][audio.noteIndex][0] == 'q')
+  {
+    stopAudio();
+    return;
+  }
+
+  float frequency = getCurrentSongFrequency();
+
+  if (frequency != 0)
+    tone(buzzerPin, frequency);
+  else
+    noTone(buzzerPin);
+    
+  audio.lastNoteTime = millis();
+  audio.noteIndex++;
+}
+
 struct Timer
 {
   String label = "Player 1";
@@ -205,10 +234,23 @@ struct Timer
   long stopTime = -60000;
   bool hasStarted = false;
   bool hasReset = true;
+  bool mark30 = false;
+  bool mark60 = false;
+  long latestTimes[3] = {-1, -1, -1};
 };
 
 Timer timer1;
 Timer timer2;
+
+long GetTimeMs(struct Timer *timer)
+{
+  if (timer->hasStarted)
+    return millis() - timer->startTime;
+  else if (!timer->hasReset)
+    return timer->stopTime - timer->startTime;
+  else
+    return 0;
+}
 
 void StartTimer(struct Timer *timer)
 {
@@ -228,17 +270,20 @@ void StopTimer(struct Timer *timer)
 
   timer->stopTime = millis();
   timer->hasStarted = false;
+  timer->mark30 = false;
+  timer->mark60 = false;
   screen.hasUpdated = true;
-}
 
-long GetTimeMs(struct Timer *timer)
-{
-  if (timer->hasStarted)
-    return millis() - timer->startTime;
-  else if (!timer->hasReset)
-    return timer->stopTime - timer->startTime;
-  else
-    return 0;
+  timer->latestTimes[2] = timer->latestTimes[1];
+  timer->latestTimes[1] = timer->latestTimes[0];
+  timer->latestTimes[0] = GetTimeMs(timer);
+
+  if (settings.playerCount == 1)
+  {
+    timer2.latestTimes[2] = timer2.latestTimes[1];
+    timer2.latestTimes[1] = timer2.latestTimes[0];
+    timer2.latestTimes[0] = -1;
+  }
 }
 
 void ResetTimer(struct Timer *timer)
@@ -341,9 +386,9 @@ bool CheckForImpact(class MPU6050 *mpu, struct MPUData *mpuData)
     mpuData->sampleCount++;
     if (millis() > mpuData->calibrationTime)
     {
-      Serial.print(mpuData->label);
-      Serial.print(" ");
-      Serial.println("Ready");
+      // Serial.print(mpuData->label);
+      // Serial.print(" ");
+      // Serial.println("Ready");
       mpuData->isCalibrating = false;
       mpuData->averageValue = mpuData->valueSum / mpuData->sampleCount;
     }
@@ -381,7 +426,7 @@ byte lastDigitBuffer[4];
  pin 10 is connected to LOAD 
  We have only a single MAX72XX.
  */
-LedControl externalClock(13,12,11,1);
+LedControl externalClock(13, 12, 11, 1);
 
 void initExternalClock()
 {
@@ -473,44 +518,110 @@ void PrintMeasurementClock(struct Timer *timer, int offset = 0)
   
   digitBuffer[0 + offset] = (timeLeft / 1000 ) / 10;
   digitBuffer[1 + offset] = (timeLeft / 1000 ) % 10;
+
+  if (!timer->mark30 && digitBuffer[0 + offset] == 3 && digitBuffer[1 + offset] == 0)
+  {
+    timer->mark30 = true;
+    startAudio("measure", true);
+  }
+  
+  if (!timer->mark60 && digitBuffer[0 + offset] == 0 && digitBuffer[1 + offset] == 0)
+  {
+    timer->mark60 = true;
+    startAudio("hall", true);
+  }
   
   showInternalDisplay();
   if (!compareBuffers())
     showExternalDisplay();
 }
 
-LedControl externalTimer(10,9,8,1);
+LedControl externalTimer(10, 9, 8, 1);
+String externalMessage = "";
+long lastMessageTime = 0;
+int messageShowTime = 0;
+bool isShowingMessage = false;
+int periodTime = 0;
+
+void printExternalTimer(String message, int messageTime, int newPeriodTime = 0)
+{
+  while(message.length() < 5)
+  {
+    message += " ";
+  }
+  externalMessage = message;
+  lastMessageTime = millis();
+  messageShowTime = messageTime;
+  isShowingMessage = true;
+  periodTime = newPeriodTime;
+}
 
 void showExternalTimer()
 {
-  externalTimer.clearDisplay(0);
-  
+  if (isShowingMessage)
+  {
+    String message = externalMessage;
+    if (((millis() + lastMessageTime) % periodTime) < periodTime / 2)
+      message = "     ";
+
+    int charIndex = 0;
+    for (int i = 4; i >= 0; i--)
+    {
+      externalTimer.setChar(0, i, message.charAt(charIndex), false); 
+      charIndex++;
+    }
+    
+    if (millis() >= lastMessageTime + messageShowTime)
+      isShowingMessage = false;
+    return;
+  }
+
   struct Timer timer = timer1;
 
   if (settings.playerCount == 2)
     timer = timer2;
 
   float currentTime = ((float)GetTimeMs(&timer)) / 1000;
-  String timeString = String(currentTime, 3);
   
-  int digitIndex = timeString.length() - 2;
-  if (digitIndex > 4)
+  if (currentTime >= 59.999)
   {
-    digitIndex = 4;
+    String minutes = String(int(currentTime) / 60);
+    if (minutes.length() <= 1)
+      minutes = " " + minutes;
+
+    String seconds = String(int(currentTime) % 60);
+    if (seconds.length() <= 1)
+      seconds = "0" + seconds;
+    seconds += " ";
+
+    externalTimer.setChar(0, 4, minutes.charAt(0), false); 
+    externalTimer.setChar(0, 3, minutes.charAt(1), true); 
+    externalTimer.setChar(0, 2, seconds.charAt(0), false); 
+    externalTimer.setChar(0, 1, seconds.charAt(1), false); 
+    externalTimer.setChar(0, 0, seconds.charAt(2), false); 
   }
-  
-  for (int i = 0; i < timeString.length(); i++)
+  else
   {
-    if (timeString.charAt(i) == '.')
+    String timeString = String(currentTime, 3);
+
+    if (timeString.length() <= 5)
+      timeString = "0" + timeString;
+    
+    int digitIndex = 4;
+
+    for (int i = 0; i < timeString.length(); i++)
     {
-      digitIndex++;
-      externalTimer.setDigit(0, digitIndex, timeString.charAt(i - 1) - 48, true); 
+      if (timeString.charAt(i) == '.')
+      {
+        digitIndex++;
+        externalTimer.setChar(0, digitIndex, timeString.charAt(i - 1), true); 
+      }
+      else
+      {
+        externalTimer.setChar(0, digitIndex, timeString.charAt(i), false); 
+      }
+      digitIndex--;
     }
-    else
-    {
-      externalTimer.setDigit(0, digitIndex, timeString.charAt(i) - 48, false); 
-    }
-    digitIndex--;
   }
 }
 
@@ -545,6 +656,18 @@ int getModeIndex(String modeName)
     mode = 2;
   else if (modeName == "sensors")
     mode = 3;
+  else if (modeName == "sound")
+    mode = 6;
+  else if (modeName == "startSensor")
+    mode = 7;
+  else if (modeName == "stopSensor")
+    mode = 8;
+  else if (modeName == "music0")
+    mode = 9;
+  else if (modeName == "music1")
+    mode = 10;
+  else if (modeName == "messagePlayers")
+    mode = 11;
 
   return mode;
 }
@@ -582,7 +705,7 @@ void PrintButtons(String buttons[], int buttonCount, bool isColumn = true, int h
       if (isColumn)
         lcd.setCursor(homeX, i + homeY);
       else
-        lcd.setCursor(i * 10, homeY);
+        lcd.setCursor(i * 10 + homeX, homeY);
         
       if (isColumn && i == screen.cursorY)
       {
@@ -619,11 +742,11 @@ void PrintButtons(String buttons[], int buttonCount, bool isColumn = true, int h
       }
       else
       {
-        lcd.setCursor(screen.lastCursorX * 10, homeY);
+        lcd.setCursor(screen.lastCursorX * 10 + homeX, homeY);
         lcd.print(" ");
         lcd.print(buttons[screen.lastCursorX]);
         lcd.print(" ");
-        lcd.setCursor(screen.cursorX * 10, homeY);
+        lcd.setCursor(screen.cursorX * 10 + homeX, homeY);
         lcd.print("[");
         lcd.print(buttons[screen.cursorX]);
         lcd.print("]");
@@ -642,7 +765,11 @@ void PrintButtonMatrix(String buttons[], int width, int height, int homeY = 0)
     {
       for (int x = 0; x < width; x++)
       {
-        lcd.setCursor(x * 10, y + homeY);
+        int spacing = 0;
+        if (width == 3 && x == 1)
+          spacing = 1;
+
+        lcd.setCursor(x * 20 / width + spacing, y + homeY);
         if (x == screen.cursorX && y == screen.cursorY)
         {
           lcd.print("[");
@@ -660,18 +787,24 @@ void PrintButtonMatrix(String buttons[], int width, int height, int homeY = 0)
   }
   else
   {
-    lcd.setCursor(screen.lastCursorX * 10, screen.lastCursorY + homeY);
+    int spacingLast = 0;
+    int spacingCurrent = 0;
+    if (width == 3 && screen.lastCursorX == 1)
+      spacingLast = 1;
+    if (width == 3 && screen.cursorX == 1)
+      spacingCurrent = 1;
+    lcd.setCursor(screen.lastCursorX * 20 / width + spacingLast, screen.lastCursorY + homeY);
     lcd.print(" ");
     lcd.print(buttons[screen.lastCursorX + screen.lastCursorY * width]);
     lcd.print(" ");
-    lcd.setCursor(screen.cursorX * 10, screen.cursorY + homeY);
+    lcd.setCursor(screen.cursorX * 20 / width + spacingCurrent, screen.cursorY + homeY);
     lcd.print("[");
     lcd.print(buttons[screen.cursorX + screen.cursorY * width]);
     lcd.print("]");
   }
 }
 
-void PrintTimer(struct Timer *timer, int offsetY = 0)
+void PrintLabeledTimer(struct Timer *timer, int offsetY = 0)
 {
   if (timer->hasReset)
   {
@@ -684,39 +817,50 @@ void PrintTimer(struct Timer *timer, int offsetY = 0)
   lcd.print(" ");
   
   long currentTime = GetTimeMs(timer);
-  float seconds = ((float)currentTime) / 1000;
+  PrintTime(currentTime, 9, offsetY);
+}
+
+void PrintTime(long time, int homeX, int homeY)
+{
+  if (time == -1)
+    return;
+
+  float seconds = ((float)time) / 1000;
   if (seconds > 60)
   {
     seconds = seconds - (((int)seconds) / 60) * 60;
   }
-  int minutes = (currentTime / 1000) / 60;
+  int minutes = (time / 1000) / 60;
   
   if (minutes > 0)
   {
-    lcd.setCursor(9, offsetY);
+    lcd.setCursor(0 + homeX, homeY);
     if (seconds < 10)     
       lcd.print(" ");
     lcd.print(minutes);
     lcd.print("m ");
   }
   
-  lcd.setCursor(12, offsetY);
-  if (seconds < 10)     lcd.print(" ");
+  lcd.setCursor(3 + homeX, homeY);
+  if (seconds < 10)     
+    lcd.print(" ");
   lcd.print(seconds, 3);
   lcd.print("s");
 }
 
 void RenderMain()
 {
-  String buttons[] = {"Start", "Stop", "Reset", "More"};
-  PrintButtonMatrix(buttons, 2, 2, 2);
+  String buttons[] = {"Start", "Stop", "Reset", "Cool", "Fail", "More"};
+  PrintButtonMatrix(buttons, 3, 2, 2);
   
-  PrintTimer(&timer1, 0);
-  PrintTimer(&timer2, 1);
+  PrintLabeledTimer(&timer1, 0);
+
+  if (settings.playerCount == 2)
+    PrintLabeledTimer(&timer2, 1);
 
   if (input.clicked)
   {
-    switch(screen.cursorX + screen.cursorY * 2)
+    switch(screen.cursorX + screen.cursorY * 3)
     {
       case 0:
         StartTimer(&timer1);
@@ -734,6 +878,14 @@ void RenderMain()
           ResetTimer(&timer2);
         break;
       case 3:
+        printExternalTimer("coo1", 3000, 500);
+        startAudio("cool");
+        break;
+      case 4:
+        printExternalTimer("fa1l", 3000, 500);
+        startAudio("fail");
+        break;
+      case 5:
         SetScreenMode("more");
         break;
     }
@@ -742,7 +894,7 @@ void RenderMain()
 
 void RenderMore()
 {
-  String buttons[] = {"Settings", "Show Scores", "Music Player", "Go Back"};
+  String buttons[] = {"Settings", "Show Scores", "Music Player", "Return"};
   PrintButtons(buttons, 4);
 
   if (input.clicked)
@@ -756,10 +908,111 @@ void RenderMore()
         SetScreenMode("scores");
         break;
       case 2:
-        startAudio("moon");
+        SetScreenMode("music0");
         break;
       case 3:
         SetScreenMode("main");
+        break;
+    }
+  }
+}
+
+void RenderScores()
+{
+  String buttons[] = {"Return"};
+  lcd.setCursor(0, 0);
+  lcd.print("Latest:");
+  
+  for (int y = 0; y < 3; y++)
+  {
+    for (int x = 0; x < 2; x++)
+    {
+      Timer timer = timer1;
+      if (x == 1)
+        timer = timer2;
+
+      PrintTime(timer.latestTimes[y], x * 10, y + 1);
+    }
+  }
+
+  PrintButtons(buttons, 1, false, 10, 0);
+  
+  if (input.clicked)
+  {
+    switch(screen.cursorY)
+    {
+      case 0:
+        SetScreenMode("main");
+        break;
+    }
+  }
+}
+
+void RenderMusic0()
+{
+  String buttons[8];
+  buttons[0] = "Next";
+  buttons[1] = "Return";
+  for (int i = 0; i < 6; i++)
+  {
+    buttons[i + 2] = songNames[i];
+  }
+  PrintButtonMatrix(buttons, 2, 4);
+
+  if (input.clicked)
+  {
+    switch(screen.cursorX + screen.cursorY * 2)
+    {
+      case 0:
+        SetScreenMode("music1");
+        break;
+      case 1:
+        SetScreenMode("more");
+        break;
+      default:
+        startAudio(songNames[screen.cursorX + screen.cursorY * 2 - 2]);
+
+        int chance = random(0, 10 + 1);
+        if (chance == 10)
+          printExternalTimer("pa1n", 5000, 0);
+        else
+          printExternalTimer(songNames[screen.cursorX + screen.cursorY * 2 - 2], 2000, 200 * chance);
+
+        break;
+    }
+  }
+}
+
+void RenderMusic1()
+{
+  String buttons[8];
+  buttons[0] = "Next";
+  buttons[1] = "Return";
+  for (int i = 0; i < 6; i++)
+  {
+    buttons[i + 2] = songNames[i + 6];
+  }
+  PrintButtonMatrix(buttons, 2, 4);
+
+  if (input.clicked)
+  {
+    switch(screen.cursorX + screen.cursorY * 2)
+    {
+      case 0:
+        // SetScreenMode("music2");
+        break;
+      case 1:
+        SetScreenMode("more");
+        break;
+      default:
+        startAudio(songNames[screen.cursorX + screen.cursorY * 2 - 2 + 6]);
+
+        int chance = random(0, 10 + 1);
+        if (chance == 10)
+          printExternalTimer("pa1n", 5000, 0);
+        else
+          printExternalTimer(songNames[screen.cursorX + screen.cursorY * 2 - 2 + 6], 2000, 200 * chance);
+        
         break;
     }
   }
@@ -770,7 +1023,7 @@ void RenderSettings()
   lcd.setCursor(6,0);
   lcd.print("Settings");
   
-  String buttons[] = {"Players", "Sensors", "Sound", "Save", "Reset", "Go Back"};
+  String buttons[] = {"Players", "Sensors", "Sound", "Save", "Reset", "Return"};
   PrintButtonMatrix(buttons, 2, 3, 1);
 
   if (input.clicked)
@@ -784,16 +1037,18 @@ void RenderSettings()
         SetScreenMode("sensors");
         break;
       case 2:
-
+        SetScreenMode("sound", settings.isMuted);
         break;
       case 3:
-
+        SaveSettings();
+        startAudio("saved");
         break;
       case 4:
-
+        ResetSettings();
+        startAudio("reset");
         break;
       case 5:
-        SetScreenMode("more");
+        SetScreenMode("main");
         break;
     }
   }
@@ -812,24 +1067,167 @@ void RenderSetPlayers()
     switch(screen.cursorX)
     {
       case 0:
-        settings.playerCount = 1;
+        if (settings.playerCount != 1 && (timer1.hasStarted || timer2.hasStarted))
+        {
+          SetScreenMode("messagePlayers");
+        }
+        else
+        {
+          settings.playerCount = 1;
+          SetScreenMode("settings", 0, 0);
+        }
         break;
       case 1:
-        settings.playerCount = 2;
+        if (settings.playerCount != 2 && (timer1.hasStarted || timer2.hasStarted))
+        {
+          SetScreenMode("messagePlayers");
+        }
+        else
+        {
+          settings.playerCount = 2;
+          SetScreenMode("settings", 0, 0);
+        }
+        break;
+    }
+  }
+}
+
+void RenderSetSound()
+{
+  lcd.setCursor(7, 1);
+  lcd.print("Sound");
+  
+  String buttons[] = {"On", "Off"};
+  PrintButtons(buttons, 2, false, 3, 2);
+
+  if (input.clicked)
+  {
+    switch(screen.cursorX)
+    {
+      case 0:
+        settings.isMuted = false;
+        break;
+      case 1:
+        settings.isMuted = true;
         break;
     }
     SetScreenMode("settings", 0, 0);
   }
 }
 
-void RenderSetSensitivity()
+void RenderSensors()
 {
+  lcd.setCursor(0, 0);
+  lcd.print(" Sensors");
   
+  String buttons[] = {"Start Sensor", "Stop Sensor", "Return"};
+  PrintButtons(buttons, 3, true, 0, 1);
+
+  if (input.clicked)
+  {
+    switch(screen.cursorY)
+    {
+      case 0:
+        SetScreenMode("startSensor");
+        break;
+      case 1:
+        SetScreenMode("stopSensor");
+        break;
+      case 2:
+        SetScreenMode("settings");
+        break;
+    }
+  }
 }
 
-void RenderShowScores()
+void RenderStartSensor()
 {
-  
+  lcd.setCursor(0, 0);
+  lcd.print(" Start Sensor");
+
+  lcd.setCursor(4, 1);
+  lcd.print(settings.sensitivityJudge);
+
+  String buttons[] = {"-", "+", "Default", "Return"};
+  PrintButtonMatrix(buttons, 2, 2, 1);
+
+  if (input.clicked)
+  {
+    switch(screen.cursorX + screen.cursorY * 2)
+    {
+      case 0:
+        settings.sensitivityJudge -= 0.1;
+        if (settings.sensitivityJudge < 0)
+          settings.sensitivityJudge = 0;
+        break;
+      case 1:
+        settings.sensitivityJudge += 0.1;
+        if (settings.sensitivityJudge > 10)
+          settings.sensitivityJudge = 10;
+        break;
+      case 2:
+        settings.sensitivityJudge = defaultSensitivity;
+        break;
+      case 3:
+        SetScreenMode("sensors");
+        break;
+    }
+  }
+}
+
+void RenderStopSensor()
+{
+  lcd.setCursor(0, 0);
+  lcd.print(" Stop Sensor");
+
+  lcd.setCursor(4, 1);
+  lcd.print(settings.sensitivityPlayer);
+
+  String buttons[] = {"-", "+", "Default", "Return"};
+  PrintButtonMatrix(buttons, 2, 2, 1);
+
+  if (input.clicked)
+  {
+    switch(screen.cursorX + screen.cursorY * 2)
+    {
+      case 0:
+        settings.sensitivityPlayer -= 0.1;
+        if (settings.sensitivityPlayer < 0)
+          settings.sensitivityPlayer = 0;
+        break;
+      case 1:
+        settings.sensitivityPlayer += 0.1;
+        if (settings.sensitivityPlayer > 10)
+          settings.sensitivityPlayer = 10;
+        break;
+      case 2:
+        settings.sensitivityPlayer = defaultSensitivity;
+        break;
+      case 3:
+        SetScreenMode("sensors");
+        break;
+    }
+  }
+}
+
+void RenderMessage(String returnMode = "main", String row0 = "", String row1 = "", String row2 = "", String row3 = "")
+{
+  lcd.setCursor(0, 0);
+  lcd.print(row0);
+
+  lcd.setCursor(0, 1);
+  lcd.print(row1);
+
+  lcd.setCursor(0, 2);
+  lcd.print(row2);
+
+  lcd.setCursor(0, 3);
+  lcd.print(row3);
+
+  if (input.clicked)
+  {
+    SetScreenMode(returnMode);
+  }
 }
 
 void UpdateCursor()
@@ -870,10 +1268,10 @@ void UpdateScreen()
   if ((timer1.hasStarted || timer2.hasStarted) && millis() > screen.lastTimerUpdateTime + screen.timerUpdateDelay)
   {
     if (screen.mode == 0 && timer1.hasStarted)
-      PrintTimer(&timer1, 0);
+      PrintLabeledTimer(&timer1, 0);
   
     if (screen.mode == 0 && timer2.hasStarted)
-      PrintTimer(&timer2, 1);
+      PrintLabeledTimer(&timer2, 1);
 
     screen.lastTimerUpdateTime = millis();
   }
@@ -900,13 +1298,31 @@ void UpdateScreen()
         RenderSetPlayers();
         break;
       case 3:
-        RenderSetSensitivity();
+        RenderSensors();
         break;
       case 4:
-        RenderShowScores();
+        RenderScores();
         break;
       case 5:
         RenderSettings();
+        break;
+      case 6:
+        RenderSetSound();
+        break;
+      case 7:
+        RenderStartSensor();
+        break;
+      case 8:
+        RenderStopSensor();
+        break;
+      case 9:
+        RenderMusic0();
+        break;
+      case 10:
+        RenderMusic1();
+        break;
+      case 11:
+        RenderMessage("players", "", "Error:", " Stop timers first.");
         break;
     }
 
@@ -994,6 +1410,8 @@ void setup() {
   // Setup Serial Monitor
   Serial.begin(9600);
   Wire.begin();
+
+  LoadSettings();
 
   initExternalClock();
 
